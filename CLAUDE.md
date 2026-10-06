@@ -54,6 +54,4 @@ Use the glossary in the service's `CONTEXT.md` in code and UI text: **Learner**,
 - `npm run dev` serves the static files locally (the `serve` devDependency: a zero-config static server, used so MediaPipe's WASM files and ES modules load over http)
 - `npm test` runs the pure-logic unit tests (`test/*.test.js`, Node's built-in runner). Keep logic that has no DOM in its own module so it stays testable this way.
 
-## Known gaps
 
-- Calibration targets are currently drawn inside a card panel. The protocol's `target` is viewport-normalized, so the real Calibration must render targets relative to the viewport (fullscreen or fixed overlay) before frames are sent.

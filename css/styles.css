@@ -37,23 +37,27 @@ progress { width: 120px; height: 8px; appearance: none; border: 0; border-radius
 progress::-webkit-progress-bar { background: var(--blue-soft); }
 progress::-webkit-progress-value { background: var(--blue); }
 progress::-moz-progress-bar { background: var(--blue); }
-.calibration { padding: 32px 32px 20px; }
-.calibration h2 { font-size: 1.5rem; margin: 0 0 10px; }
-.calibration p { margin: 0 0 22px; color: var(--ink); line-height: 1.5; font-size: .9rem; }
-.panel { position: relative; aspect-ratio: 16 / 7.4; background: var(--soft); border: 1px solid var(--line); border-radius: 4px; }
+/* Calibration fills the viewport: target positions are fractions of the viewport, as the protocol's `target` requires. */
+.card[data-screen="calibration"] { position: fixed; inset: 0; width: auto; border-radius: 0; box-shadow: none; }
+.card[data-screen="calibration"] .bar { position: absolute; inset: 0 0 auto 0; z-index: 2; padding: 8px 16px; }
+.calibration { position: absolute; inset: 0; }
+.panel { position: absolute; inset: 0; background: var(--soft); }
+.intro { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(90%, 34rem); text-align: center; pointer-events: none; }
+.intro h2 { font-size: clamp(1.1rem, 3.5vmin, 1.6rem); margin: 0 0 6px; }
+.intro p { margin: 0; line-height: 1.45; font-size: clamp(.75rem, 2.2vmin, .95rem); }
+.foot { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; z-index: 1; }
+.foot .hint { margin: 0; font-size: .72rem; color: var(--muted); }
+.foot .link-btn { margin: 0 auto; padding: 2px 8px; }
 .target { position: absolute; transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 8px; font-size: .75rem; color: var(--muted); }
 .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--blue); transition: transform .15s; }
 .target[data-state="collecting"] .dot { transform: scale(2); box-shadow: 0 0 0 4px var(--blue-soft); }
 .target[data-state="ok"] .dot { background: #16a34a; }
 .target[data-state="skipped"] .dot { background: #d97706; }
-.calibration .hint { text-align: center; font-size: .72rem; color: var(--muted); margin: 18px 0 0; }
 
 @media (max-width: 600px) {
   .welcome { grid-template-columns: 1fr; padding: 28px 20px; }
   .hero { order: -1; max-width: 200px; }
   .notes { flex-direction: column; gap: 10px; }
-  .calibration { padding: 24px 16px 16px; }
-  .panel { aspect-ratio: 1; }
 }
 @media (prefers-reduced-motion: reduce) { .dot { transition: none; } }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
