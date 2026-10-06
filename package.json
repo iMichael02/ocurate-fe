@@ -1,0 +1,13 @@
+{
+  "name": "ocurate-fe",
+  "private": true,
+  "type": "module",
+  "description": "Browser client for Ocurate (plain HTML, CSS and JavaScript)",
+  "scripts": {
+    "dev": "serve . -l 5173",
+    "test": "node --test \"test/*.test.js\""
+  },
+  "devDependencies": {
+    "serve": "^14.2.0"
+  }
+}
