@@ -51,7 +51,7 @@ Use the glossary in the service's `CONTEXT.md` in code and UI text: **Learner**,
 ## Commands
 
 - `npm install` installs libraries
-- `npm run dev` serves the static files locally (the `serve` devDependency: a zero-config static server, used so MediaPipe's WASM files and ES modules load over http)
+- `npm run dev` serves the static files locally (`npx http-server`, fetched on demand and not a dependency: a zero-config static server with caching off, used so MediaPipe's WASM files and ES modules load over http)
 - `npm test` runs the pure-logic unit tests (`test/*.test.js`, Node's built-in runner). Keep logic that has no DOM in its own module so it stays testable this way.
 
 
