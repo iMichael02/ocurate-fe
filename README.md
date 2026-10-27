@@ -45,6 +45,6 @@ The web server is supposed to create the Session and open this page with
 ## Things to check / to do
 
 - **Matrix order**: `face-tracker.js` transposes MediaPipe's matrix (column-major → row-major) as the
-  protocol doc says. The doc asks to verify this against real output.
-- **Protocol v2** (`eye_centres`, Timm & Barth in the browser) is not implemented; we send version 1.
+  protocol doc says. Verified on real output (translation in `data[12..14]`).
+- **Protocol v2** (`eye_centres`) is implemented: `js/eye-centre.js` is the Timm & Barth port of the service's `eye_centre.py` (replays its golden crops, `test/golden/eye-centre.json`), `js/eye-crop.js` cuts the eye crops per docs/eye-centre.md, and `js/face-tracker.js` adds `eye_centres` to each frame when the negotiated version is 2. Set `protocolVersion: 1` in `js/config.js` to send landmarks only.
 - **No scrolling or resizing** during a Session: it sends `viewport_changed` and the Session ends.

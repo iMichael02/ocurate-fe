@@ -20,6 +20,7 @@ const state = {
   target: null,           // current calibration target sent with frames
   landmarkerReady: false,
   layoutSent: false,
+  version: 1,             // negotiated protocol version (hello_ack); 2 adds eye_centres
   lastFrameT: 0,
   fixations: 0,
   activeCell: null,
@@ -111,6 +112,7 @@ async function startSession() {
 function handleMessage(msg) {
   switch (msg.type) {
     case "hello_ack":
+      state.version = msg.version;
       // Wait one frame so the Passage has its final size, then report the Cell Layout.
       requestAnimationFrame(() => {
         state.conn.send(measureLayout());
@@ -159,7 +161,7 @@ function frameLoop(now) {
   state.lastFrameT = now;
 
   const video = $("session-video");
-  let frame = state.landmarkerReady ? detect(video, now) : null;
+  let frame = state.landmarkerReady ? detect(video, now, state.version >= 2) : null;
   if (!frame && CONFIG.useMock && !state.landmarkerReady) frame = syntheticFrame(now);
 
   if (!frame) return; // no face: send nothing, the service tolerates gaps
