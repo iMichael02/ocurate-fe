@@ -11,9 +11,9 @@ export const CONFIG = {
   serviceWsUrl: "ws://localhost:8000/ws",
   serviceHttpUrl: "http://localhost:8000",
 
-  // Protocol version sent in `hello`. Version 2 also needs browser eye centres (Timm & Barth),
-  // which this frontend does not compute yet, so stay on 1.
-  protocolVersion: 1,
+  // Protocol version sent in `hello`. Version 2 adds the browser-computed eye centres
+  // (Timm & Barth, js/eye-centre.js) to every frame; use 1 to send landmarks only.
+  protocolVersion: 2,
 
   // Frame rate cap (architecture-design.md: about 30 frames per second).
   maxFps: 30,

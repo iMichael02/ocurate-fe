@@ -2,6 +2,7 @@
 // Turns each video frame into the `frame` payload of docs/websocket-protocol.md.
 
 import { CONFIG } from "./config.js";
+import { eyeCentres } from "./eye-crop.js";
 
 // Landmark order is fixed by the protocol (mirrors eye_features.py).
 const IRIS = [474, 475, 476, 477, 469, 470, 471, 472];
@@ -10,6 +11,7 @@ const NOSE_TIP = 1;
 
 let stream = null;
 let landmarker = null;
+let scratch = null;   // offscreen canvas the eye crops are read from; never shown or sent
 
 export async function startCamera() {
   if (stream) return stream;
@@ -44,8 +46,7 @@ const round = (v) => Math.round(v * 1e5) / 1e5;
 
 // MediaPipe gives a flat 16-value matrix in column-major order.
 // The service reads it row-major (4 rows of 4), so transpose while reshaping.
-// The protocol doc asks to verify this against real output: if head-pose features look
-// wrong on the backend, swap to data[r * 4 + c].
+// Verified on real MediaPipe output: translation sits in data[12..14].
 function toRowMajor(data) {
   const rows = [];
   for (let r = 0; r < 4; r++) {
@@ -54,24 +55,53 @@ function toRowMajor(data) {
   return rows;
 }
 
+// The current video frame (unmirrored) as a source for the eye crops: only the
+// two small boxes around the eyes are copied out, not the whole frame.
+function videoSource(video) {
+  if (!scratch) scratch = document.createElement("canvas");
+  return {
+    width: video.videoWidth,
+    height: video.videoHeight,
+    read(x, y, w, h) {
+      if (scratch.width !== w) scratch.width = w;
+      if (scratch.height !== h) scratch.height = h;
+      const ctx = scratch.getContext("2d", { willReadFrequently: true });
+      ctx.drawImage(video, x, y, w, h, 0, 0, w, h);
+      return ctx.getImageData(0, 0, w, h);
+    },
+  };
+}
+
 /**
  * Run the landmarker on the current video frame.
  * Returns { t, iris, eye_corners, nose, matrix } or null when no face is found.
+ * With `withEyeCentres` (protocol version 2) it also has `eye_centres`: the
+ * Timm & Barth centre of each eye, left then right (docs/eye-centre.md in the
+ * service repo). The pixels stay in this function.
  */
-export function detect(video, t) {
+export function detect(video, t, withEyeCentres = false) {
   if (!landmarker || video.readyState < 2) return null;
   const result = landmarker.detectForVideo(video, t);
   const face = result.faceLandmarks?.[0];
   const matrix = result.facialTransformationMatrixes?.[0];
   if (!face || !matrix) return null;
 
-  return {
+  const frame = {
     t: round(t),
     iris: IRIS.map((i) => xy(face[i])),
     eye_corners: EYE_CORNERS.map((i) => xy(face[i])),
     nose: xy(face[NOSE_TIP]),
     matrix: toRowMajor(matrix.data),
   };
+
+  if (withEyeCentres) {
+    // Corners are rounded like the ones the service receives, so both sides agree.
+    frame.eye_centres = eyeCentres(videoSource(video), frame.eye_corners).map((c) => ({
+      x: round(c.x), y: round(c.y), confidence: round(c.confidence),
+    }));
+  }
+
+  return frame;
 }
 
 // Used by the mock when MediaPipe cannot load (offline, old browser):
@@ -89,5 +119,8 @@ export function syntheticFrame(t) {
     ],
     nose: { x: 0.5, y: 0.55 },
     matrix: [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, -35], [0, 0, 0, 1]],
+    ...(CONFIG.protocolVersion >= 2 && {
+      eye_centres: [{ x: 0.62, y: 0.42, confidence: 0.9 }, { x: 0.38, y: 0.42, confidence: 0.9 }],
+    }),
   };
 }
