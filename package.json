@@ -5,6 +5,7 @@
   "description": "Browser client for Ocurate (plain HTML, CSS and JavaScript)",
   "scripts": {
     "dev": "npx http-server . -p 5173 -c-1",
-    "test": "node --test \"test/*.test.js\""
+    "test": "node --test \"test/*.test.js\"",
+    "dev:service": "node scripts/dev-server.js"
   }
 }

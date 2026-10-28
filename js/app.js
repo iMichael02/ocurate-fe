@@ -7,6 +7,7 @@ import { CONFIG } from "./config.js";
 import { DEFAULT_PASSAGE, loadPassage, textToBraille } from "./passage.js";
 import { startCamera, loadLandmarker, detect, syntheticFrame } from "./face-tracker.js";
 import { openConnection } from "./connection.js";
+import { createSession } from "./session-api.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -77,12 +78,13 @@ async function startSession() {
   hideError();
   const params = new URLSearchParams(location.search);
 
+  let token = null;
   if (!CONFIG.useMock) {
-    // The web server creates the Session (POST /sessions) and hands the browser these.
-    const token = params.get("token");
-    if (!token) return showError("Missing session token (?token=…). The web server should provide it.");
+    const passageId = params.get("passage") ?? "default";
     try {
-      state.passage = await loadPassage(CONFIG.serviceHttpUrl, params.get("passage") ?? "default");
+      state.passage = await loadPassage(CONFIG.serviceHttpUrl, passageId);
+      // Created last: the token is single-use and expires within a minute.
+      ({ token } = await createSession(CONFIG.webServerUrl, passageId));
     } catch (err) {
       return showError(err.message);
     }
@@ -93,7 +95,7 @@ async function startSession() {
   resetSessionUi();
   setPhase("connecting");
 
-  const conn = openConnection({ token: params.get("token"), passage: state.passage });
+  const conn = openConnection({ token, passage: state.passage });
   state.conn = conn;
   conn.onMessage = handleMessage;
   conn.onClose = (code) => {
