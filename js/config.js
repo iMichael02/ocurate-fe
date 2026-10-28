@@ -7,7 +7,10 @@ export const CONFIG = {
   useMock: true,
 
   // Real service (only used when useMock is false).
-  // The web server normally gives the browser the session id + token after POST /sessions.
+  // The browser asks the web server for a Session (POST {webServerUrl}/sessions) and gets the
+  // token back in the response. The token is never read from the page URL.
+  // Use wss:// and https:// outside local development.
+  webServerUrl: "/api",
   serviceWsUrl: "ws://localhost:8000/ws",
   serviceHttpUrl: "http://localhost:8000",
 
