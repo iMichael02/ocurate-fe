@@ -41,12 +41,20 @@ The token is never read from, or written to, the page URL, so it cannot leak thr
 
 ```
 # terminal 1: the service, with the same key
-OCURATE_API_KEY=dev-key OCURATE_DEV_MODE=1 OCURATE_DATABASE_URL=… venv/bin/uvicorn app:app
+OCURATE_API_KEY=dev-key OCURATE_DEV_MODE=1 OCURATE_DATABASE_URL=… OCURATE_ALLOWED_ORIGINS=http://localhost:5173 venv/bin/uvicorn app.app:app
 # terminal 2: this page
 OCURATE_API_KEY=dev-key npm run dev:service
 ```
 
-Open http://localhost:5173/?mock=0. The service must allow this origin (CORS for `/passages`) once that is configured.
+Open http://localhost:5173/?mock=0. The service must list this origin in `OCURATE_ALLOWED_ORIGINS` (as in the command above), or `/ws` and `GET /passages` are refused.
+
+## Test
+
+```
+npm test
+```
+
+Runs `test/*.test.js` with Node's built-in test runner; no install needed beyond Node.
 
 ## Files
 
@@ -57,6 +65,12 @@ Open http://localhost:5173/?mock=0. The service must allow this origin (CORS for
 | `js/config.js` | Settings: mock on/off, service URLs, frame rate, calibration timing |
 | `js/app.js` | Main flow: screens, sending `layout` / `frame` / `calibration_*`, handling replies |
 | `js/face-tracker.js` | Webcam + MediaPipe Face Landmarker → the `frame` landmark subset |
+| `js/main.js` | Standalone calibration-screen demo (screen switching); not loaded by `index.html`, which uses `app.js` |
+| `js/calibration-grid.js` | The grid of calibration target positions |
+| `js/calibration-screen.js` | Draws the calibration dots on screen |
+| `js/sequence.js` | Plays items one at a time (used to show the dots in order) |
+| `js/eye-centre.js` | Timm & Barth eye-centre port of the service's `eye_centre.py` |
+| `js/eye-crop.js` | Cuts the eye crops from the video frame |
 | `js/connection.js` | Same interface for the real WebSocket and the mock |
 | `js/mock-service.js` | Fake service for testing without the backend |
 | `js/session-api.js` | Asks the web server for a Session and returns the token |
@@ -68,4 +82,4 @@ Open http://localhost:5173/?mock=0. The service must allow this origin (CORS for
 - **Matrix order**: `face-tracker.js` transposes MediaPipe's matrix (column-major → row-major) as the
   protocol doc says. Verified on real output (translation in `data[12..14]`).
 - **Protocol v2** (`eye_centres`) is implemented: `js/eye-centre.js` is the Timm & Barth port of the service's `eye_centre.py` (replays its golden crops, `test/golden/eye-centre.json`), `js/eye-crop.js` cuts the eye crops per docs/eye-centre.md, and `js/face-tracker.js` adds `eye_centres` to each frame when the negotiated version is 2. Set `protocolVersion: 1` in `js/config.js` to send landmarks only.
-- **No scrolling or resizing** during a Session: it sends `viewport_changed` and the Session ends.
+- **Note:** no scrolling or resizing is allowed during a Session: it sends `viewport_changed` and the Session ends.
