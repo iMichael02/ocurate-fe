@@ -1,0 +1,5 @@
+# Reject a commit message with a line over 120 characters ("#" comment lines are ignored).
+if grep -v '^#' "$1" | awk 'length($0) > 120 { bad = 1 } END { exit !bad }'; then
+  echo "Commit message has a line over 120 characters." >&2
+  exit 1
+fi

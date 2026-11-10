@@ -54,7 +54,13 @@ Open http://localhost:5173/?mock=0. The service must list this origin in `OCURAT
 npm test
 ```
 
-Runs `test/*.test.js` with Node's built-in test runner; no install needed beyond Node.
+Runs `test/*.test.js` with Node's built-in test runner; the tests themselves need no install.
+
+## Git hooks
+
+[Husky](https://typicode.github.io/husky/) runs ESLint (`npm run lint`) and the unit tests before each commit, and rejects commit
+messages with a line over 120 characters. `npm install` sets the hooks up through the `prepare` script, so there is nothing else to do.
+CI runs the same lint and tests on every push.
 
 ## Files
 
