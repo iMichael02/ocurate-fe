@@ -17,7 +17,7 @@ const PEAK_EXCLUSION_RADIUS = 10.0;
 /** Like numpy.gradient along one axis: central differences, one-sided at the edges. */
 function gradient(image, axis) {
   const rows = image.length, cols = image[0].length;
-  const out = image.map((row) => new Array(cols).fill(0));
+  const out = image.map(() => new Array(cols).fill(0));
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const n = axis === 0 ? rows : cols;

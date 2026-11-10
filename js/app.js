@@ -44,7 +44,7 @@ $("btn-camera").addEventListener("click", async () => {
     $("session-video").srcObject = stream;
     $("camera-status").textContent = "";
     $("btn-camera").disabled = true;
-  } catch (err) {
+  } catch {
     $("camera-status").textContent = "Camera blocked";
     return showError("We need the camera. Allow it in your browser and try again.");
   }
