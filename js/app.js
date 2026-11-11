@@ -4,8 +4,9 @@
 //   → calibration_done → frames without target → reading_started → fixation… → completed
 
 import { CONFIG } from "./config.js";
-import { closeMessage } from "./close-message.mjs";
+import { closeMessage } from "./close-message.js";
 import { DEFAULT_PASSAGE, loadPassage, textToBraille } from "./passage.js";
+import { describeCameraError } from "./camera-error.js";
 import { startCamera, loadLandmarker, detect, syntheticFrame } from "./face-tracker.js";
 import { openConnection } from "./connection.js";
 import { createSession } from "./session-api.js";
@@ -46,9 +47,11 @@ $("btn-camera").addEventListener("click", async () => {
     $("session-video").srcObject = stream;
     $("camera-status").textContent = "";
     $("btn-camera").disabled = true;
-  } catch {
-    $("camera-status").textContent = "Camera blocked";
-    return showError("We need the camera. Allow it in your browser and try again.");
+  } catch (err) {
+    const cause = describeCameraError(err);
+    console.warn("Camera failed to start:", cause.name); // the error name only, nothing about the Learner
+    $("camera-status").textContent = cause.status;
+    return showError(`We need the camera. ${cause.help}`);
   }
 
   $("camera-status").textContent = "Loading face tracker…";
