@@ -25,6 +25,9 @@ export const CONFIG = {
   calibrationMsPerPoint: 1200,
   // Frames right after a dot moves are not tagged, so the eyes have time to land on it.
   calibrationSettleMs: 300,
+  // The last dot stays (and frames stay tagged) until the service judges the calibration, so a slow
+  // device still gets its 20 frames. Give up after this long (the service times out at 30 s).
+  calibrationLastPointMaxMs: 15000,
   // Pause with no dot on screen before the next one appears.
   calibrationGapMs: 250,
 

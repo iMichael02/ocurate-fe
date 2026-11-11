@@ -32,7 +32,7 @@ Use the glossary in the service's `CONTEXT.md` in code and UI text: **Learner**,
 - Any resize, fullscreen change or scroll sends `viewport_changed`. Handle `abandoned` and socket close by showing the reason and offering a new Session. There is no resume or reconnect.
 - The session token is single-use and short-lived (60 s by default). Get it from the web server with `createSession` (`js/session-api.js`) at the moment the Learner starts, then connect right away. Never read it from, or put it in, a URL, and never log it.
 - The browser never reports results to the web server. Display what `completed` carries.
-- Handle the `error` codes: `unsupported_version`, `invalid_token`, `invalid_message`, `out_of_order`, `timestamp_regression`, `calibration_failed`. Close codes: 1000 normal, 4400 invalid message, 4401 bad token, 4408 timeout, 4409 unsupported version.
+- Handle the `error` codes: `unsupported_version`, `invalid_token`, `invalid_message`, `out_of_order`, `timestamp_regression`, `calibration_failed`, `rate_limited`. Close codes: 1000 normal, 4400 invalid message, 4401 bad token, 4408 timeout, 4409 unsupported version, 4429 rate limited, 1013 service full, 1011 passage could not be loaded.
 
 ## Privacy
 

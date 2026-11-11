@@ -8,6 +8,7 @@ test("returns the correct message for each close code", () => {
   assert.match(closeMessage(4401), /expired or is invalid/i);
   assert.match(closeMessage(4408), /timed out/i);
   assert.match(closeMessage(4409), /not supported/i);
+  assert.match(closeMessage(4429), /too fast/i);
   assert.match(closeMessage(1011), /passage/i);
   assert.match(closeMessage(1013), /full/i);
 });
