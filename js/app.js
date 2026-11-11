@@ -77,7 +77,7 @@ function safeSend(msg) {
   try {
     state.conn.send(msg);
     return true;
-  } catch (err) {
+  } catch {
     endSession("Connection to the service was lost.");
     return false;
   }
