@@ -130,6 +130,7 @@ conn.onClose = (code) => {
     await conn.ready;
   } catch (err) {
     endSession(err.message);
+    return;
   }
   requestAnimationFrame(frameLoop);
 }
@@ -140,7 +141,7 @@ function handleMessage(msg) {
       state.version = msg.version;
       // Wait one frame so the Passage has its final size, then report the Cell Layout.
       requestAnimationFrame(() => {
-        state.conn.send(measureLayout());
+     if (!safeSend(measureLayout())) return;
         state.layoutSent = true;
         showCalibrationGuide();
       });
@@ -198,7 +199,7 @@ function frameLoop(now) {
   } else if (state.phase !== "reading") {
     return;
   }
-  state.conn.send({ type: "frame", ...frame });
+  if (!safeSend({ type: "frame", ...frame })) return;
 }
 
 // ======================= Layout =======================
@@ -243,7 +244,7 @@ function measureLayout() {
 // Any resize, fullscreen change or scroll invalidates the calibration → Session is abandoned.
 function onViewportChanged() {
   if (!state.layoutSent || state.phase === "done" || state.phase === "ended") return;
-  state.conn.send({ type: "viewport_changed" });
+ safeSend({ type: "viewport_changed" });
 }
 window.addEventListener("resize", onViewportChanged);
 window.addEventListener("scroll", onViewportChanged, true);
@@ -322,7 +323,7 @@ function updateCalibrationDots(points) {
 
 function onCalibrated() {
   state.target = null;
-  state.conn.send({ type: "calibration_done" });
+  if (!safeSend({ type: "calibration_done" })) return;
   $("calibration").classList.add("hidden");
   setPhase("reading");
   startRecording();
@@ -342,7 +343,7 @@ function onCalibrationFailed(msg) {
 }
 
 $("btn-calib-retry").addEventListener("click", () => {
-  state.conn.send({ type: "calibration_restart" });
+  if (!safeSend({ type: "calibration_restart" })) return;
   runCalibration();
 });
 
@@ -368,7 +369,7 @@ function onFixation(row, col) {
 
 // No on-screen controls while reading: Escape quits the Session.
 window.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && state.phase === "reading") state.conn?.send({ type: "quit" });
+  if (e.key === "Escape" && state.phase === "reading" && state.conn) safeSend({ type: "quit" });
 });
 
 // ======================= Results & ending =======================
