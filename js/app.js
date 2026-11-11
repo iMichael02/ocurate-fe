@@ -78,10 +78,11 @@ function safeSend(msg) {
     state.conn.send(msg);
     return true;
   } catch {
-    endSession("Connection to the service was lost.");
+    if (state.phase !== "done") endSession("Connection to the service was lost.");
     return false;
   }
 }
+
 // ======================= Session =======================
 
 async function startSession() {
@@ -108,33 +109,12 @@ async function startSession() {
   const conn = openConnection({ token, passage: state.passage });
   state.conn = conn;
   conn.onMessage = handleMessage;
-  // conn.onClose = (code) => {
-  //   if (state.phase !== "done" && state.phase !== "ended") {
-  //     endSession(code === 4401 ? "Your session link expired. Start a new session." : "Connection to the service was lost.");
-  //   }
-  // };
+  conn.onClose = (code) => {
+    if (state.phase !== "done" && state.phase !== "ended") {
+      endSession(closeMessage(code));
+    }
+  };
 
-
-//   conn.onClose = (code) => {
-//   if (state.phase !== "done" && state.phase !== "ended") {
-//     const messages = {
-//       4400: "A protocol error occurred. Please start a new session.",
-//       4401: "Your session link is invalid. Please start a new session.",
-//       4408: "The session timed out. Please start a new session.",
-//       4409: "This service version is not supported. Please start a new session.",
-//       1011: "The service could not load the passage. Please start a new session.",
-//       1013: "The service is currently full. Please start a new session.",
-//     };
-
-//     endSession(messages[code] || "Connection to the service was lost.");
-//   }
-// };
-conn.onClose = (code) => {
-  if (state.phase !== "done" && state.phase !== "ended") {
-    endSession(closeMessage(code));
-  }
-};
-  
   try {
     await conn.ready;
   } catch (err) {
@@ -150,7 +130,7 @@ function handleMessage(msg) {
       state.version = msg.version;
       // Wait one frame so the Passage has its final size, then report the Cell Layout.
       requestAnimationFrame(() => {
-     if (!safeSend(measureLayout())) return;
+        if (!safeSend(measureLayout())) return;
         state.layoutSent = true;
         showCalibrationGuide();
       });
@@ -253,7 +233,7 @@ function measureLayout() {
 // Any resize, fullscreen change or scroll invalidates the calibration → Session is abandoned.
 function onViewportChanged() {
   if (!state.layoutSent || state.phase === "done" || state.phase === "ended") return;
- safeSend({ type: "viewport_changed" });
+  safeSend({ type: "viewport_changed" });
 }
 window.addEventListener("resize", onViewportChanged);
 window.addEventListener("scroll", onViewportChanged, true);

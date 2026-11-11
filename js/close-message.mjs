@@ -7,7 +7,7 @@ export function closeMessage(code) {
       return "A protocol error occurred. Please start a new session.";
 
     case 4401:
-      return "Your session link is invalid. Please start a new session.";
+      return "Your session link expired or is invalid. Please start a new session.";
 
     case 4408:
       return "The session timed out. Please start a new session.";
