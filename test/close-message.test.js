@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { closeMessage } from "../js/close-message.mjs";
+import { closeMessage } from "../js/close-message.js";
 
 test("returns the correct message for each close code", () => {
   assert.equal(closeMessage(1000), "The session has ended.");
