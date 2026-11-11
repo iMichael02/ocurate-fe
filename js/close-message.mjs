@@ -15,6 +15,9 @@ export function closeMessage(code) {
     case 4409:
       return "This service version is not supported. Please start a new session.";
 
+    case 4429:
+      return "The camera sent data too fast for the service. Close other tabs or apps and start a new session.";
+
     case 1011:
       return "The service could not load the passage. Please start a new session.";
 

@@ -29,6 +29,7 @@ const state = {
   recStart: 0,
   recTimer: null,
   calibRun: 0,
+  calibJudged: false,     // the service answered the last calibration attempt (ready or failed)
 };
 
 // ======================= Start screen =======================
@@ -139,6 +140,7 @@ function handleMessage(msg) {
     case "calibration_status":
       updateCalibrationDots(msg.points);
       $("calib-attempt").textContent = `Attempt ${msg.attempt} of ${msg.max_attempts}`;
+      if (msg.outcome) state.calibJudged = true;
       if (msg.outcome === "ready") onCalibrated();
       if (msg.outcome === "failed") onCalibrationFailed(msg);
       break;
@@ -260,6 +262,7 @@ $("btn-calib-start").addEventListener("click", () => {
 // One dot at a time: it appears, shrinks until it is gone, and only then does the next one appear.
 async function runCalibration() {
   const run = ++state.calibRun;
+  state.calibJudged = false;
   const live = () => run === state.calibRun && state.phase === "calibrating";
   setPhase("calibrating");
   $("calibration").classList.remove("hidden");
@@ -268,8 +271,9 @@ async function runCalibration() {
   drawCalibrationGrid();
 
   const dot = $("calib-target");
-  for (const p of CALIB_POINTS) {
+  for (const [i, p] of CALIB_POINTS.entries()) {
     if (!live()) return;
+    const last = i === CALIB_POINTS.length - 1;
     state.target = null; // don't tag frames while the eyes travel to the new dot
     dot.style.left = `${p.x * 100}%`;
     dot.style.top = `${p.y * 100}%`;
@@ -282,8 +286,22 @@ async function runCalibration() {
     if (!live()) return shrink.cancel();
     state.target = { x: round(p.x), y: round(p.y) };
     await sleep(CONFIG.calibrationMsPerPoint - CONFIG.calibrationSettleMs);
+    if (last) {
+      // The service judges calibration once it has enough frames on the last point, and a slow
+      // device sends fewer than the dot's timer allows for. Keep the dot (pulsing) and keep
+      // tagging frames until the service answers, up to a limit.
+      shrink.cancel();
+      dot.animate(
+        [{ transform: "scale(1)" }, { transform: "scale(0.4)" }],
+        { duration: 600, direction: "alternate", iterations: Infinity, easing: "ease-in-out" },
+      );
+      const deadline = performance.now() + CONFIG.calibrationLastPointMaxMs;
+      while (live() && !state.calibJudged && performance.now() < deadline) await sleep(50);
+      if (!live()) return;
+    }
     state.target = null;
     shrink.cancel();
+    dot.getAnimations().forEach((a) => a.cancel());
     dot.classList.add("hidden");
     await sleep(CONFIG.calibrationGapMs);
   }
@@ -391,6 +409,7 @@ function abandonText(reason) {
     calibration_failed: "Calibration failed too many times. Check your lighting and try again.",
     socket_closed: "The connection was closed.",
     protocol_error: "Something went wrong talking to the service.",
+    rate_limited: "The camera sent data too fast for the service. Close other tabs or apps and try again.",
   }[reason] ?? "The session ended early.";
 }
 
