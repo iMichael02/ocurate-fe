@@ -46,6 +46,14 @@ OCURATE_API_KEY=dev-key OCURATE_DEV_MODE=1 OCURATE_DATABASE_URL=… OCURATE_ALLO
 OCURATE_API_KEY=dev-key npm run dev:service
 ```
 
+Instead of putting the key on the command line, copy `.env.example` to `.env` (git ignores it), set `OCURATE_API_KEY` to the same value the service uses, and run `npm run dev:service`. A variable already set in the shell wins over `.env`.
+
+```
+cp -n .env.example .env
+npm install
+npm run dev:service
+```
+
 Open http://localhost:5173/?mock=0. The service must list this origin in `OCURATE_ALLOWED_ORIGINS` (as in the command above), or `/ws` and `GET /passages` are refused.
 
 ## Test
