@@ -14,6 +14,8 @@ npm run dev
 
 Open http://localhost:5173 in Chrome or Firefox, click **Enable camera**, then **Start reading test**.
 
+This starts the page in **mock mode**, which needs no backend. To talk to the real service, see [Real service mode](#real-service-mode-mock0). The shell commands in this README are for Unix shells (Linux, macOS, WSL, Git Bash). On Windows PowerShell, set variables with `$env:NAME="value"` instead of `NAME=value command`.
+
 ## Mock mode (default)
 
 `js/mock-service.js` plays the service, so the whole flow runs without a backend:
@@ -37,24 +39,40 @@ The token is never read from, or written to, the page URL, so it cannot leak thr
 
 ### Local development without a web server
 
-`scripts/dev-server.js` stands in for the web server. It serves this folder and answers `POST /api/sessions` by calling the service with the API key. It has no sign-in, listens on 127.0.0.1 only, and is for development only.
+`scripts/dev-server.js` (`npm run dev:service`) stands in for the web server. It serves this folder **and** answers `POST /api/sessions` by calling the service with the API key. It has no sign-in, listens on 127.0.0.1 only, and is for development only.
+
+Do not use `npm run dev` for live mode: it only serves static files and has no `/api/sessions`, so the page cannot get a Session token.
+
+Run these in order, from the two repos' folders. The values below are the defaults of the service's `.env.example`:
 
 ```
-# terminal 1: the service, with the same key
-OCURATE_API_KEY=dev-key OCURATE_DEV_MODE=1 OCURATE_DATABASE_URL=… OCURATE_ALLOWED_ORIGINS=http://localhost:5173 venv/bin/uvicorn app.app:app
-# terminal 2: this page
-OCURATE_API_KEY=dev-key npm run dev:service
-```
-
-Instead of putting the key on the command line, copy `.env.example` to `.env` (git ignores it), set `OCURATE_API_KEY` to the same value the service uses, and run `npm run dev:service`. A variable already set in the shell wins over `.env`.
-
-```
+# Terminal 1, in the service repo: start MySQL, create the Passages, run the service
 cp -n .env.example .env
+set -a; . ./.env; set +a
+docker compose up -d --wait mysql
+venv/bin/python -m app.passages.passage_store
+venv/bin/uvicorn app.app:app            # no --reload while OCURATE_DEV_MODE=1
+
+# Terminal 2, in this repo: serve the page and the Session endpoint
 npm install
-npm run dev:service
+OCURATE_API_KEY=dev-api-key npm run dev:service
 ```
 
-Open http://localhost:5173/?mock=0. The service must list this origin in `OCURATE_ALLOWED_ORIGINS` (as in the command above), or `/ws` and `GET /passages` are refused.
+Instead of putting the key on the command line, copy `.env.example` to `.env` (git ignores it), set `OCURATE_API_KEY` there, and run plain `npm run dev:service`. A variable already set in the shell wins over `.env`.
+
+Then open **http://localhost:5173/?mock=0** (the `?mock=0` switch selects the real service; without it you get the mock). The badge at the top should read "Live service", not "Mock service".
+
+`OCURATE_API_KEY` must be the same value in both terminals (`dev-api-key` comes from the service's `.env`). The service must list `http://localhost:5173` in `OCURATE_ALLOWED_ORIGINS` (also set by its `.env.example`).
+
+If the page cannot connect:
+
+| Message on the start screen | Check |
+|---|---|
+| "Could not load passage (…)" or a network error | The service is not running on `localhost:8000`, or MySQL is not started or seeded (`curl localhost:8000/passages` must list `default`). |
+| "Could not reach the web server." | You ran `npm run dev` instead of `npm run dev:service`, or the dev server is not running. |
+| "The reading service is busy or unavailable" (503) | The service cannot reach its database, or `OCURATE_API_KEY` differs between the two terminals. |
+| "Could not reach the gaze-analysis service" | The WebSocket was refused: the page's origin is not in `OCURATE_ALLOWED_ORIGINS`. Open the page as `localhost` (not `127.0.0.1`), or list that origin. |
+| Session ends right after the click | The token expired or was used already: click **Start reading test** again. Also happens when uvicorn runs with `--reload` and `OCURATE_DEV_MODE=1`. |
 
 ## Test
 

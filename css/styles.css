@@ -17,12 +17,12 @@
 
 * { box-sizing: border-box; }
 
-/* The viewport must not scroll during a Session (a scroll abandons it). */
-html, body {
-  margin: 0;
-  height: 100%;
-  overflow: hidden;
-}
+html, body { margin: 0; }
+/* The start screen scrolls when the window is short. The Session screen must not scroll
+   (a scroll abandons the Session), so it locks the viewport to the window. */
+body { min-height: 100vh; }
+body.in-session { height: 100vh; overflow: hidden; }
+html:has(body.in-session) { overflow: hidden; }
 
 body {
   font-family: "Inter", system-ui, sans-serif;
@@ -263,7 +263,3 @@ body.in-session .topbar { display: none; }
 }
 .result-list li span { color: var(--muted); }
 
-/* ===== Small screens ===== */
-@media (max-width: 860px) {
-  html, body { overflow: auto; }
-}
