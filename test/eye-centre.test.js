@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { locateEyeCentre } from '../js/eye-centre.js';
+import { locateEyeCentre } from '../js/camera/eye-centre.js';
 
 // Golden crops copied from the service repo (tests/golden/eye_centre.json,
 // produced by eye_centre.py). Copy again if the service's file changes.

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { describeCameraError } from "../js/camera-error.js";
+import { describeCameraError } from "../js/camera/camera-error.js";
 
 const named = (name) => Object.assign(new Error("x"), { name });
 

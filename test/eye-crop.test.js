@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { eyeCrop, eyeCentres, CROP_WIDTH, CROP_HEIGHT } from '../js/eye-crop.js';
+import { eyeCrop, eyeCentres, CROP_WIDTH, CROP_HEIGHT } from '../js/camera/eye-crop.js';
 
 const near = (a, b, eps = 1e-6) => Math.abs(a - b) <= eps;
 

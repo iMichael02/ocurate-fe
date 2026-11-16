@@ -18,7 +18,7 @@ This starts the page in **mock mode**, which needs no backend. To talk to the re
 
 ## Mock mode (default)
 
-`js/mock-service.js` plays the service, so the whole flow runs without a backend:
+`js/service/mock-service.js` plays the service, so the whole flow runs without a backend:
 same messages, same order, same calibration rules (12 of 16 points, every row and column).
 It can't estimate gaze, so **during reading the mouse pointer is the gaze**: hover over each
 Cell from the top-left one to the last one.
@@ -31,7 +31,7 @@ Needs the service running with `/ws`, `GET /passages/{id}` and `POST /sessions` 
 
 How a Session starts:
 
-1. The Learner clicks **Start reading test**. The page loads the Passage from the service, then asks the web server for a Session: `POST {webServerUrl}/sessions` with `{"passage_id": "default"}` (`js/session-api.js`; `webServerUrl` is `/api` in `js/config.js`).
+1. The Learner clicks **Start reading test**. The page loads the Passage from the service, then asks the web server for a Session: `POST {webServerUrl}/sessions` with `{"passage_id": "default"}` (`js/service/session-api.js`; `webServerUrl` is `/api` in `js/config.js`).
 2. The web server checks the Learner's sign-in, calls the service's `POST /sessions` with its API key, and answers `{session_id, passage_id, token, expires_in}`. The API key never reaches the browser.
 3. The page opens the WebSocket straight away and sends the token in `hello`. The token is single use and expires in 60 s by default, which is why it is requested last, at the click, and not when the page loads.
 
@@ -95,23 +95,33 @@ CI runs the same lint and tests on every push.
 | `index.html` | All screens: start, calibration overlay, reading, results and "session ended" modals |
 | `css/styles.css` | Styles (colors are variables at the top) |
 | `js/config.js` | Settings: mock on/off, service URLs, frame rate, calibration timing |
-| `js/app.js` | Main flow: screens, sending `layout` / `frame` / `calibration_*`, handling replies |
-| `js/face-tracker.js` | Webcam + MediaPipe Face Landmarker → the `frame` landmark subset |
-| `js/main.js` | Standalone calibration-screen demo (screen switching); not loaded by `index.html`, which uses `app.js` |
-| `js/calibration-grid.js` | The grid of calibration target positions |
-| `js/calibration-screen.js` | Draws the calibration dots on screen |
-| `js/sequence.js` | Plays items one at a time (used to show the dots in order) |
-| `js/eye-centre.js` | Timm & Barth eye-centre port of the service's `eye_centre.py` |
-| `js/eye-crop.js` | Cuts the eye crops from the video frame |
-| `js/connection.js` | Same interface for the real WebSocket and the mock |
-| `js/mock-service.js` | Fake service for testing without the backend |
-| `js/session-api.js` | Asks the web server for a Session and returns the token |
+| `js/app.js` | Entry point: wires the modules below together |
+| `js/state.js` | Shared Session state and small helpers |
+| `js/ui/start-screen.js` | Start screen: camera preview, mode badge, start button |
+| `js/ui/session-ui.js` | Screen switching, recording clock, results and "session ended" modals |
+| `js/session/session.js` | Starts a Session and routes the service's messages |
+| `js/session/frames.js` | Captures and sends `frame` messages |
+| `js/session/layout.js` | Draws the Passage and measures the `layout` message |
+| `js/session/guards.js` | Resize/scroll/fullscreen, Escape and mock-pointer listeners |
+| `js/session/send.js` | Sends a message; a broken socket ends the Session |
+| `js/calibration/calibration-flow.js` | The 16-dot calibration and the service's verdict |
+| `js/reading/reading-ui.js` | Live reading feedback (fixated Cell, progress) |
+| `js/camera/face-tracker.js` | Webcam + MediaPipe Face Landmarker → the `frame` landmark subset |
+| `js/calibration/main.js` | Standalone calibration-screen demo (screen switching); not loaded by `index.html`, which uses `app.js` |
+| `js/calibration/calibration-grid.js` | The grid of calibration target positions |
+| `js/calibration/calibration-screen.js` | Draws the calibration dots on screen |
+| `js/calibration/sequence.js` | Plays items one at a time (used to show the dots in order) |
+| `js/camera/eye-centre.js` | Timm & Barth eye-centre port of the service's `eye_centre.py` |
+| `js/camera/eye-crop.js` | Cuts the eye crops from the video frame |
+| `js/service/connection.js` | Same interface for the real WebSocket and the mock |
+| `js/service/mock-service.js` | Fake service for testing without the backend |
+| `js/service/session-api.js` | Asks the web server for a Session and returns the token |
 | `scripts/dev-server.js` | Development stand-in for the web server (static files + `POST /api/sessions`) |
-| `js/passage.js` | Braille table and default Passage (same as `passage.py`) |
+| `js/reading/passage.js` | Braille table and default Passage (same as `passage.py`) |
 
 ## Things to check / to do
 
 - **Matrix order**: `face-tracker.js` transposes MediaPipe's matrix (column-major → row-major) as the
   protocol doc says. Verified on real output (translation in `data[12..14]`).
-- **Protocol v2** (`eye_centres`) is implemented: `js/eye-centre.js` is the Timm & Barth port of the service's `eye_centre.py` (replays its golden crops, `test/golden/eye-centre.json`), `js/eye-crop.js` cuts the eye crops per docs/eye-centre.md, and `js/face-tracker.js` adds `eye_centres` to each frame when the negotiated version is 2. Set `protocolVersion: 1` in `js/config.js` to send landmarks only.
+- **Protocol v2** (`eye_centres`) is implemented: `js/camera/eye-centre.js` is the Timm & Barth port of the service's `eye_centre.py` (replays its golden crops, `test/golden/eye-centre.json`), `js/camera/eye-crop.js` cuts the eye crops per docs/eye-centre.md, and `js/camera/face-tracker.js` adds `eye_centres` to each frame when the negotiated version is 2. Set `protocolVersion: 1` in `js/config.js` to send landmarks only.
 - **Note:** no scrolling or resizing is allowed during a Session: it sends `viewport_changed` and the Session ends.
