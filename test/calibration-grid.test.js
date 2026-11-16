@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { calibrationTargets } from '../js/calibration-grid.js';
+import { calibrationTargets } from '../js/calibration/calibration-grid.js';
 
 test('has 16 targets indexed 0-15 in row-major order', () => {
   const targets = calibrationTargets();

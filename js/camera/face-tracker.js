@@ -1,7 +1,7 @@
 // Webcam + MediaPipe Face Landmarker, all in the browser.
 // Turns each video frame into the `frame` payload of docs/websocket-protocol.md.
 
-import { CONFIG } from "./config.js";
+import { CONFIG } from "../config.js";
 import { eyeCentres } from "./eye-crop.js";
 
 // Landmark order is fixed by the protocol (mirrors eye_features.py).

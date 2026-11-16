@@ -4,7 +4,7 @@
 //   conn.onClose = fn       called with the close code
 //   conn.close()
 
-import { CONFIG } from "./config.js";
+import { CONFIG } from "../config.js";
 import { MockService } from "./mock-service.js";
 
 export function openConnection({ token, passage }) {

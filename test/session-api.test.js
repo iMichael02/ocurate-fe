@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createSession } from '../js/session-api.js';
+import { createSession } from '../js/service/session-api.js';
 
 const ok = (body) => async () => ({ ok: true, status: 201, json: async () => body });
 const status = (code) => async () => ({ ok: false, status: code, json: async () => ({}) });

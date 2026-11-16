@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { playSequence } from '../js/sequence.js';
+import { playSequence } from '../js/calibration/sequence.js';
 
 test('plays items in order, starting each only after the previous finished', async () => {
   const log = [];
