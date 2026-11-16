@@ -58,6 +58,8 @@ npm install
 OCURATE_API_KEY=dev-api-key npm run dev:service
 ```
 
+Instead of putting the key on the command line, copy `.env.example` to `.env` (git ignores it), set `OCURATE_API_KEY` there, and run plain `npm run dev:service`. A variable already set in the shell wins over `.env`.
+
 Then open **http://localhost:5173/?mock=0** (the `?mock=0` switch selects the real service; without it you get the mock). The badge at the top should read "Live service", not "Mock service".
 
 `OCURATE_API_KEY` must be the same value in both terminals (`dev-api-key` comes from the service's `.env`). The service must list `http://localhost:5173` in `OCURATE_ALLOWED_ORIGINS` (also set by its `.env.example`).

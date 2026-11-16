@@ -31,3 +31,5 @@ dist-ssr
 *.bmp
 *.tiff
 *.webp
+
+.env
