@@ -133,4 +133,5 @@ CI runs the same lint and tests on every push.
   the error in px divided by the mean of the Cell width and height in px (from the `layout` sent); the
   cursor check scales each axis by its own Cell size. A cursor more than half a Cell outside the first Cell
   is discarded and the line is left out. Nothing is stored, logged or sent.
+- **Version fallback:** if the service answers `unsupported_version`, `js/service/connection.js` retries once on a new socket with the highest version in `supported` below the refused one (`js/service/version.js`), so the page still works against an older service. The token is unused at that point, because the version is checked first. The negotiated version comes from `hello_ack`.
 - **Note:** no scrolling or resizing is allowed during a Session: it sends `viewport_changed` and the Session ends.
