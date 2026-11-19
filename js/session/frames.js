@@ -22,7 +22,9 @@ export function frameLoop(now) {
   if (state.phase === "calibrating") {
     if (!state.target) return;
     frame.target = state.target;
-  } else if (state.phase !== "reading") {
+  } else if (state.phase !== "reading" && state.phase !== "calibration_ready") {
+    // Untagged frames while the calibration result is shown carry nothing for the service,
+    // but keep its 30 s inactivity timer from ending the Session.
     return;
   }
   safeSend({ type: "frame", ...frame });

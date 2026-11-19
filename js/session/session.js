@@ -15,6 +15,7 @@ import {
   showScreen, resetSessionUi, stopRecording, showResults, endSession, abandonText,
 } from "../ui/session-ui.js";
 import { renderPassage, measureLayout } from "./layout.js";
+import { cursorCheck } from "./accuracy.js";
 import { safeSend } from "./send.js";
 import { frameLoop } from "./frames.js";
 
@@ -66,7 +67,9 @@ function handleMessage(msg) {
       state.version = msg.version;
       // Wait one frame so the Passage has its final size, then report the Cell Layout.
       requestAnimationFrame(() => {
-        if (!safeSend(measureLayout())) return;
+        const layout = measureLayout();
+        if (!safeSend(layout)) return;
+        state.layout = layout;
         state.layoutSent = true;
         showCalibrationGuide();
       });
@@ -77,6 +80,11 @@ function handleMessage(msg) {
       break;
 
     case "reading_started":
+      // In mock mode the mouse is the gaze, so comparing the two would always give zero.
+      if (!CONFIG.useMock) {
+        const first = state.layout?.cells.find((c) => c.row === 0 && c.col === 0);
+        state.cursorCheck = cursorCheck({ gaze: msg.gaze, cursor: state.cursor, cell: first });
+      }
       break;
 
     case "fixation":

@@ -23,7 +23,7 @@ Use the glossary in the service's `CONTEXT.md` in code and UI text: **Learner**,
 ## Protocol rules that the client must follow
 
 - Message order: `hello` (with `version` and `token`) → `layout` (once) → calibration frames with `target` → `calibration_done` → frames without `target` → `fixation` events → `completed`.
-- Supported versions are 1 and 2. Send `eye_centres` only on version 2. The service validates every message with `extra="forbid"`, so do not add fields.
+- Supported versions are 1, 2 and 3. Send `eye_centres` only on version 2 and later. Version 3 adds two service → browser fields: `calibration_status.calibration_error_px` (ready only) and `reading_started.gaze`; both may be absent. The service validates every message with `extra="forbid"`, so do not add fields.
 - Calibration: 4×4 grid, 0.1 to 0.9 evenly spaced, 16 targets, about 30 frames each. Show per-point status from `calibration_status`. On `failed`, send `calibration_restart` (max 3 attempts in total, then the Session is abandoned).
 - `t` is the browser capture time in ms and must strictly increase. Never use arrival time. Cap the frame rate at about 30 per second.
 - Landmarks are in camera-image coordinates, and `layout` and `target` are in viewport coordinates. Do not mix them. Landmark order is fixed (see README.md).
