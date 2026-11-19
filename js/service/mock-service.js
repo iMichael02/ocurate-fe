@@ -4,6 +4,9 @@
 //
 // It cannot estimate gaze, so during reading it uses the MOUSE POINTER as the gaze point:
 // hover over a Cell for ~150 ms and it counts as a Fixation.
+//
+// On protocol version 3 it also sends the gaze accuracy fields: a fixed made-up calibration error
+// (it has no model to measure) and, with reading_started, the pointer position as the gaze.
 
 const GRID = [0.1, 0.1 + 0.8 / 3, 0.1 + 1.6 / 3, 0.9]; // 4x4, 0.1 → 0.9
 const MIN_SAMPLES = 5;         // a point with fewer samples is "skipped"
@@ -11,6 +14,9 @@ const SAMPLES_PER_POINT = 20;  // when the last point has this many, calibration
 const FIXATION_MS = 150;
 const FRAME_TIMEOUT_MS = 30000;
 const MAX_ATTEMPTS = 3;
+const SUPPORTED = [1, 2, 3];
+const ACCURACY_VERSION = 3;       // adds calibration_error_px and reading_started.gaze
+const MOCK_CALIBRATION_ERROR_PX = 36;
 
 export class MockService {
   constructor(passage, emit, onClose) {
@@ -29,14 +35,14 @@ export class MockService {
     switch (msg.type) {
       case "hello":
         if (this.state !== "await_hello") return this.outOfOrder();
-        if (![1, 2].includes(msg.version)) {
+        if (!SUPPORTED.includes(msg.version)) {
           this.send({ type: "error", code: "unsupported_version",
-            message: `Protocol version ${msg.version} is not supported`, supported: [1, 2] });
+            message: `Protocol version ${msg.version} is not supported`, supported: SUPPORTED });
           return this.end(4409);
         }
         this.version = msg.version;
         this.state = "await_layout";
-        return this.send({ type: "hello_ack", version: msg.version, supported: [1, 2] });
+        return this.send({ type: "hello_ack", version: msg.version, supported: SUPPORTED });
 
       case "layout":
         if (this.state !== "await_layout") return this.outOfOrder();
@@ -118,7 +124,8 @@ export class MockService {
 
     if (!reason) {
       this.state = "calibration_ready";
-      return this.sendStatus("ready", null);
+      const extra = this.version >= ACCURACY_VERSION ? { calibration_error_px: MOCK_CALIBRATION_ERROR_PX } : {};
+      return this.sendStatus("ready", null, extra);
     }
     this.sendStatus("failed", reason);
     if (this.attempt >= MAX_ATTEMPTS) {
@@ -128,11 +135,12 @@ export class MockService {
     this.state = "calibration_failed";
   }
 
-  sendStatus(outcome, reason) {
+  sendStatus(outcome, reason, extra = {}) {
     this.send({
       type: "calibration_status",
       points: this.points.map((p) => ({ ...p })),
       outcome, reason, attempt: this.attempt, max_attempts: MAX_ATTEMPTS,
+      ...extra,
     });
   }
 
@@ -158,7 +166,9 @@ export class MockService {
       if (!first) return; // reading starts on the first Cell
       this.started = true;
       this.startT = t;
-      this.send({ type: "reading_started" });
+      this.send(this.version >= ACCURACY_VERSION
+        ? { type: "reading_started", gaze: { x: clamp01(this.pointer.x), y: clamp01(this.pointer.y) } }
+        : { type: "reading_started" });
     }
     this.sequence.push({ row, col });
     this.send({ type: "fixation", row, col, t });
@@ -227,6 +237,8 @@ export class MockService {
     if (this.state !== "done") this.abandon("socket_closed", 1000);
   }
 }
+
+const clamp01 = (v) => Math.min(1, Math.max(0, v));
 
 function nearestGridIndex({ x, y }) {
   const near = (v) => GRID.reduce((best, g, i) => (Math.abs(g - v) < Math.abs(GRID[best] - v) ? i : best), 0);

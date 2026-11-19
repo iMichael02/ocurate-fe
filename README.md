@@ -21,7 +21,8 @@ This starts the page in **mock mode**, which needs no backend. To talk to the re
 `js/service/mock-service.js` plays the service, so the whole flow runs without a backend:
 same messages, same order, same calibration rules (12 of 16 points, every row and column).
 It can't estimate gaze, so **during reading the mouse pointer is the gaze**: hover over each
-Cell from the top-left one to the last one.
+Cell from the top-left one to the last one. On protocol version 3 it sends a fixed, made-up
+calibration error, and the cursor check is turned off (the pointer would be compared with itself).
 
 Switch modes in `js/config.js` (`useMock`) or with the URL: `?mock=0` / `?mock=1`.
 
@@ -104,6 +105,7 @@ CI runs the same lint and tests on every push.
 | `js/session/layout.js` | Draws the Passage and measures the `layout` message |
 | `js/session/guards.js` | Resize/scroll/fullscreen, Escape and mock-pointer listeners |
 | `js/session/send.js` | Sends a message; a broken socket ends the Session |
+| `js/session/accuracy.js` | Gaze accuracy figures: calibration error and cursor check in Cells (no DOM) |
 | `js/calibration/calibration-flow.js` | The 16-dot calibration and the service's verdict |
 | `js/reading/reading-ui.js` | Live reading feedback (fixated Cell, progress) |
 | `js/camera/face-tracker.js` | Webcam + MediaPipe Face Landmarker → the `frame` landmark subset |
@@ -124,4 +126,11 @@ CI runs the same lint and tests on every push.
 - **Matrix order**: `face-tracker.js` transposes MediaPipe's matrix (column-major → row-major) as the
   protocol doc says. Verified on real output (translation in `data[12..14]`).
 - **Protocol v2** (`eye_centres`) is implemented: `js/camera/eye-centre.js` is the Timm & Barth port of the service's `eye_centre.py` (replays its golden crops, `test/golden/eye-centre.json`), `js/camera/eye-crop.js` cuts the eye crops per docs/eye-centre.md, and `js/camera/face-tracker.js` adds `eye_centres` to each frame when the negotiated version is 2. Set `protocolVersion: 1` in `js/config.js` to send landmarks only.
+- **Protocol v3** (gaze accuracy) is implemented. After a ready calibration the page shows the service's
+  held-out `calibration_error_px` with Continue and Start over (a new Session). The results show it as
+  "Calibration error" and, with a real mouse resting on the first Cell when reading starts, a "Cursor check"
+  comparing `reading_started.gaze` with the pointer. Conversion to Cells is in `js/session/accuracy.js`:
+  the error in px divided by the mean of the Cell width and height in px (from the `layout` sent); the
+  cursor check scales each axis by its own Cell size. A cursor more than half a Cell outside the first Cell
+  is discarded and the line is left out. Nothing is stored, logged or sent.
 - **Note:** no scrolling or resizing is allowed during a Session: it sends `viewport_changed` and the Session ends.

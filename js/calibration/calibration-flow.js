@@ -4,6 +4,7 @@ import { CONFIG } from "../config.js";
 import { $, state, setPhase, sleep, round } from "../state.js";
 import { startRecording } from "../ui/session-ui.js";
 import { safeSend } from "../session/send.js";
+import { calibrationError, formatCells } from "../session/accuracy.js";
 
 const GRID = [0.1, 0.1 + 0.8 / 3, 0.1 + 1.6 / 3, 0.9];
 const CALIB_POINTS = GRID.flatMap((y) => GRID.map((x) => ({ x, y }))); // row by row, index 0–15
@@ -83,9 +84,28 @@ function updateCalibrationDots(points) {
   });
 }
 
-function onCalibrated() {
+// Shows the calibration error with Continue and Start over. The Session waits in calibration_ready
+// (frames still flow, untagged) until the Learner chooses.
+function onCalibrationReady(msg) {
   state.target = null;
+  setPhase("calibration_ready");
+  const error = calibrationError(msg.calibration_error_px, state.layout);
+  state.calibrationError = error;
+  $("calib-ready-text").textContent = !error
+    ? "The gaze error could not be measured for this calibration."
+    : `Estimated gaze error: ${formatCells(error.cells)} (${Math.round(error.px)} px), measured on `
+      + "calibration frames the tracker did not learn from. "
+      + (error.poor
+        ? "That is more than one Cell, so reading may often be tracked on the wrong Cell. Start over to recalibrate."
+        : "That is good enough to read.");
+  $("calib-ready").classList.remove("hidden");
+  $("btn-calib-continue").focus();
+}
+
+function onCalibrated() {
+  if (state.phase !== "calibration_ready") return;
   if (!safeSend({ type: "calibration_done" })) return;
+  $("calib-ready").classList.add("hidden");
   $("calibration").classList.add("hidden");
   setPhase("reading");
   startRecording();
@@ -109,7 +129,7 @@ export function onCalibrationStatus(msg) {
   updateCalibrationDots(msg.points);
   $("calib-attempt").textContent = `Attempt ${msg.attempt} of ${msg.max_attempts}`;
   if (msg.outcome) state.calibJudged = true;
-  if (msg.outcome === "ready") onCalibrated();
+  if (msg.outcome === "ready") onCalibrationReady(msg);
   if (msg.outcome === "failed") onCalibrationFailed(msg);
 }
 
@@ -118,6 +138,9 @@ export function initCalibration() {
     $("calib-guide").classList.add("hidden");
     runCalibration();
   });
+  $("btn-calib-continue").addEventListener("click", onCalibrated);
+  // A calibration that succeeded cannot be redone on the same socket: start a new Session.
+  $("btn-calib-over").addEventListener("click", () => location.reload());
   $("btn-calib-retry").addEventListener("click", () => {
     if (!safeSend({ type: "calibration_restart" })) return;
     runCalibration();

@@ -218,6 +218,7 @@ body.in-session .topbar { display: none; }
 }
 .guide-card { max-width: 520px; text-align: center; }
 .guide-card p { line-height: 1.6; color: #cbd5e1; margin: 0 0 24px; }
+.guide-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
 /* ===== Modals ===== */
 .modal {
@@ -262,4 +263,5 @@ body.in-session .topbar { display: none; }
   padding: 8px 0; border-bottom: 1px solid var(--line);
 }
 .result-list li span { color: var(--muted); }
+.result-note { margin: -8px 0 20px; text-align: left; line-height: 1.5; }
 

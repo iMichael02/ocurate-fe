@@ -14,9 +14,14 @@ export function installGuards() {
   window.addEventListener("scroll", onViewportChanged, true);
   document.addEventListener("fullscreenchange", onViewportChanged);
 
-  // Mock only: the mouse stands in for gaze.
   window.addEventListener("pointermove", (e) => {
-    state.conn?.setPointer?.(e.clientX / window.innerWidth, e.clientY / window.innerHeight);
+    const x = e.clientX / window.innerWidth, y = e.clientY / window.innerHeight;
+    // Mock only: the mouse stands in for gaze.
+    state.conn?.setPointer?.(x, y);
+    // The cursor check uses a real mouse only (no touch or pen), and only the latest position.
+    if (e.pointerType === "mouse" && (state.phase === "calibration_ready" || state.phase === "reading")) {
+      state.cursor = { x, y };
+    }
   });
 
   // No on-screen controls while reading: Escape quits the Session.

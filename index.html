@@ -93,6 +93,20 @@
       </div>
     </div>
 
+    <!-- Calibration result: the held-out gaze error, then continue or start a new Session -->
+    <div id="calib-ready" class="calib-guide hidden" role="dialog" aria-labelledby="calib-ready-title" aria-describedby="calib-ready-text">
+      <div class="guide-card">
+        <h2 id="calib-ready-title">Calibration complete</h2>
+        <p id="calib-ready-text"></p>
+        <p>Using a mouse? Rest the pointer on the first Braille Cell while you look at it to start reading.
+          This optional check compares the tracked gaze with your pointer.</p>
+        <div class="guide-actions">
+          <button id="btn-calib-continue" class="btn btn-primary">Continue</button>
+          <button id="btn-calib-over" class="btn btn-secondary">Start over</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Calibration overlay: covers the whole viewport, targets are viewport-normalized -->
     <div id="calibration" class="calibration hidden">
       <div class="calib-info">
@@ -128,7 +142,12 @@
         <li><span>↩ Regressions</span><b id="res-regressions">—</b></li>
         <li><span>⤼ Skipped characters</span><b id="res-skipped">—</b></li>
         <li><span>◎ Cells fixated</span><b id="res-sequence">—</b></li>
+        <li><span>⌖ Calibration error</span><b id="res-calib-error">—</b></li>
+        <li id="res-cursor-row" class="hidden"><span>⇱ Cursor check</span><b id="res-cursor">—</b></li>
       </ul>
+      <p class="muted small result-note">Calibration error: how closely gaze tracking fit your calibration
+        dots, on frames it did not learn from. Cursor check: how far the tracked gaze was from your mouse
+        pointer when reading began. Both are shown in Braille Cells.</p>
 
       <button id="btn-again" class="btn btn-primary btn-block">New session</button>
     </div>

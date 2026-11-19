@@ -1,6 +1,7 @@
 // Screen switching, the recording clock, the results modal and the "session ended" modal.
 
 import { $, state, setPhase } from "../state.js";
+import { formatCells } from "../session/accuracy.js";
 
 export function showScreen(name) {
   $("screen-start").classList.toggle("hidden", name !== "start");
@@ -39,6 +40,11 @@ export function showResults(r) {
   $("res-regressions").textContent = r.regressions;
   $("res-skipped").textContent = r.skipped_characters;
   $("res-sequence").textContent = r.sequence.length;
+  const error = state.calibrationError;
+  $("res-calib-error").textContent = error ? `${formatCells(error.cells)} (${Math.round(error.px)} px)` : "Not available";
+  // No valid cursor sample: the line is left out, never shown as zero.
+  $("res-cursor-row").classList.toggle("hidden", state.cursorCheck == null);
+  if (state.cursorCheck != null) $("res-cursor").textContent = formatCells(state.cursorCheck);
   $("modal").classList.remove("hidden");
 }
 
@@ -47,6 +53,7 @@ export function endSession(text) {
   setPhase("ended");
   stopRecording();
   $("calibration").classList.add("hidden");
+  $("calib-ready").classList.add("hidden");
   $("abandoned-text").textContent = text;
   $("modal-abandoned").classList.remove("hidden");
 }

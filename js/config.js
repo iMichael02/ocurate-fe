@@ -16,7 +16,8 @@ export const CONFIG = {
 
   // Protocol version sent in `hello`. Version 2 adds the browser-computed eye centres
   // (Timm & Barth, js/eye-centre.js) to every frame; use 1 to send landmarks only.
-  protocolVersion: 2,
+  // Version 3 is version 2 plus the gaze accuracy figures (calibration error, start gaze).
+  protocolVersion: 3,
 
   // Frame rate cap (architecture-design.md: about 30 frames per second).
   maxFps: 30,
